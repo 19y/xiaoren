@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" type="text/css" href="resource/bootstrap.css">
+<script type="text/javascript" src="resource/bootstrap.js"></script>
+<script type="text/javascript" src="resource/jquery-3.0.0.min.js"></script>
+<script type="text/javascript" src="resource/full.js"></script>
+<title>xiaoRe</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style type="text/css">
+li {
+	list-style-type: none;
+}
+
+.rightBottom {
+	position: fixed;
+	_position: absolute;
+	right: 10px;
+	bottom: 10px;
+	padding: 4px;
+}
+
+.rightTop {
+	width: 131px;
+	height: 137px;
+	border: 1px solid #ccc;
+	position: fixed;
+	_position: absolute;
+	right: 20px;
+	top: 30px;
+	padding: 4px;
+}
+</style>
+<script type="text/javascript">
+	$(function() {
+
+		$(".card").hide()
+		$(".rightBottom").hide()
+		$(".rightTop").hide()
+	})
+</script>
+</head>
+<body>
+	<div class="container">
+		<nav class="navbar navbar-light bg-light">
+			<span class="navbar-brand mb-0 h1">Navbar</span>
+		</nav>
+		<div class="jumbotron jumbotron-fluid" id="MAXtitle">
+			<div class="container">
+				<h1 class="display-4">Fluid jumbotron</h1>
+				<p class="lead">This is a modified jumbotron that occupies the
+					entire horizontal space of its parent.</p>
+				<div class="custom-file">
+					<input type="file" class="custom-file-input" id="file"
+						onchange="importf(this)"> <label class="custom-file-label"
+						for="customFile">Choose file</label>
+				</div>
+			</div>
+		</div>
+		<br>
+		<!-- 單選 -->
+		<div class="card border-light mb-3">
+			<div class="card-header">单选</div>
+			<div class="card-body" id="radio-Body"></div>
+		</div>
+
+		<!-- 復選 -->
+		<div class="card border-light mb-3">
+			<div class="card-header">多选</div>
+			<div class="card-body" id="check-Body"></div>
+		</div>
+
+		<!-- 判斷 -->
+		<div class="card border-light mb-3">
+			<div class="card-header">判断</div>
+			<div class="card-body" id="bool-Body"></div>
+		</div>
+
+
+	</div>
+
+
+	<div class="rightBottom">
+		<button onclick='getScore()'>交卷</button>
+	</div>
+
+	<div class="rightTop">
+		<ul style="float: left; padding: 0px; display: block;">
+			<li>得分 : <span class='score'></span></li>
+			<li>错题 : <span class='no'></span></li>
+			<li><input type="checkbox" name='selenium'  >開啓自動提交</li>
+			<li><input type="checkbox" name='error' onclick='error(this)' >只看錯無</li>
+			<li><input type="checkbox" name='showsolve' onclick='solve(this)' >顯示答案</li>
+
+
+
+
+		</ul>
+	</div>
+
+
+
+
+
+
+
+	<script type="text/javascript">
+		/*http://oss.sheetjs.com/js-xlsx/xlsx.full.min.js*
+		 /*
+		 FileReader共有4种读取方法：
+		 1.readAsArrayBuffer(file)：将文件读取为ArrayBuffer。
+		 2.readAsBinaryString(file)：将文件读取为二进制字符串
+		 3.readAsDataURL(file)：将文件读取为Data URL
+		 4.readAsText(file, [encoding])：将文件读取为文本，encoding缺省值为'UTF-8'
+		 */
+		var wb;//读取完成的数据
+		var rABS = false; //是否将文件读取为二进制字符串
+		function html2Escape(sHtml) {
+			 return sHtml.replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});
+			}
+		
+		function importf(obj) {//导入
+			if (!obj.files) {
+				return;
+			}
+			var f = obj.files[0];
+			var reader = new FileReader();
+			reader.onload = function(e) {
+				var data = e.target.result;
+				if (rABS) {
+					wb = XLSX.read(btoa(fixdata(data)), {//手动转化
+						type : 'base64'
+					});
+				} else {
+					wb = XLSX.read(data, {
+						type : 'binary'
+					});
+				}
+				//wb.SheetNames[0]是获取Sheets中第一个Sheet的名字
+				//wb.Sheets[Sheet名]获取第一个Sheet的数据
+
+				$("#MAXtitle").hide()
+				$(".card").show()
+				$(".rightBottom").show()
+				$(".rightTop").show()
+				var ss = JSON.stringify(XLSX.utils
+						.sheet_to_json(wb.Sheets[wb.SheetNames[0]]));
+				var json = jQuery.parseJSON(ss)
+				var vquest=''
+				var vA=''
+				var vB=''
+				var vC=''
+				var vD=''
+				var vE=''
+				var vF=''
+				var vtp = ''
+				var vsolve = ''
+				for( var key in json[1])
+				{
+					if(key.indexOf('答案')!=-1)
+						vsolve=key
+					if(key.indexOf('题干')!=-1)
+						vquest=key
+					if(key.indexOf('选项A')!=-1)
+						vA=key
+					if(key.indexOf('选项B')!=-1)
+						vB=key
+					if(key.indexOf('选项C')!=-1)
+						vC=key
+					if(key.indexOf('选项D')!=-1)
+						vD=key
+					if(key.indexOf('选项E')!=-1)
+						vE=key
+					if(key.indexOf('选项F')!=-1)
+						vF=key
+					if(key.indexOf('类型')!=-1)
+						vtp=key
+				}
+				$(json)
+						.each(
+								function(i, v) {
+									var idx = i + 1;
+									var quest = v[vquest]
+									var A = v[vA]
+									var B = v[vB]
+									var C = v[vC]
+									var D = v[vD]
+									var E = v[vE]
+									var F = v[vF]
+									var tp = v[vtp]
+									var solve = v[vsolve]
+									
+									if (tp == '1-单选') {
+										if (F == undefined ||F == ''||F.length==0) {
+											if (E == undefined ||E == ''||E.length==0) {
+												var sb = "<ul id='"+idx+"' >"
+														+ "<h5 id='"+idx+"' data='"+solve+"' score='3'  class='card-title'>"
+														+ html2Escape(quest)
+														+ "</h5> "
+														+ "<li id='sli'  >  <input  type='radio' name='"+idx+"' id='"+idx+"' value='A' />  "
+														+ " A. "
+														+ html2Escape(A)
+														+ "</li>"
+														+ "<li id='sli'  > <input  type='radio' name='"+idx+"' id='"+idx+"' value='B' /> B. "
+														+ html2Escape(B)
+														+ "</li>"
+														+ "<li id='sli'  > <input  type='radio' name='"+idx+"' id='"+idx+"' value='C' /> C. "
+														+ html2Escape(C)
+														+ "</li>"
+														+ "<li id='sli'  > <input  type='radio' name='"+idx+"' id='"+idx+"' value='D' /> D. "
+														+ html2Escape(D) + "</li>"
+														+"<li name ='solve' hidden >正確答案："+solve+"</li>"
+														+ "</ul><hr/>";
+											} else {
+												var sb = "<ul id='"+idx+"' >"
+														+ "<h5 id='"+idx+"' data='"+solve+"' score='3'   class='card-title'>"
+														+ html2Escape(quest)
+														+ "</h5> "
+														+ "<li id='sli'  >  <input  type='radio' name='"+idx+"' id='"+idx+"' value='A' />  "
+														+ " A. "
+														+ html2Escape(A)
+														+ "</li>"
+														+ "<li id='sli'  > <input  type='radio' name='"+idx+"' id='"+idx+"' value='B' /> B. "
+														+ html2Escape(B)
+														+ "</li>"
+														+ "<li id='sli'  > <input  type='radio' name='"+idx+"' id='"+idx+"' value='C' /> C. "
+														+ html2Escape(C)
+														+ "</li>"
+														+ "<li id='sli'  > <input  type='radio' name='"+idx+"' id='"+idx+"' value='D' /> D. "
+														+ html2Escape(D)
+														+ "</li>"
+														+ "<li id='sli'  > <input  type='radio' name='"+idx+"' id='"+idx+"' value='E' /> E. "
+														+ html2Escape(E) + "</li>"
+														+"<li name ='solve' hidden >正確答案："+solve+"</li>"
+														+ "</ul><hr/>";
+											}
+
+										} else {
+											var sb = "<ul id='"+idx+"' >"
+													+ "<h5 id='"+idx+"' data='"+solve+"' score='3'  class='card-title'>"
+													+ html2Escape(quest)
+													+ "</h5> "
+													+ "<li id='sli'  >  <input  type='radio' name='"+idx+"' id='"+idx+"' value='A' />  "
+													+ " A. "
+													+ html2Escape(A)
+													+ "</li>"
+													+ "<li id='sli'  > <input  type='radio' name='"+idx+"' id='"+idx+"' value='B' /> B. "
+													+ html2Escape(B)
+													+ "</li>"
+													+ "<li id='sli'  > <input  type='radio' name='"+idx+"' id='"+idx+"' value='C' /> C. "
+													+ html2Escape(C)
+													+ "</li>"
+													+ "<li id='sli'  > <input  type='radio' name='"+idx+"' id='"+idx+"' value='D' /> D. "
+													+ html2Escape(D)
+													+ "</li>"
+													+ "<li id='sli'  > <input  type='radio' name='"+idx+"' id='"+idx+"' value='E' /> E. "
+													+ html2Escape(E)
+													+ "</li>"
+													+ "<li id='sli'  > <input  type='radio' name='"+idx+"' id='"+idx+"' value='F' /> F. "
+													+ html2Escape(F)
+													+ "</li>"
+													+"<li name ='solve' hidden >正確答案："+solve+"</li>"
+													+ "</ul><hr/>";
+										}
+										$('#radio-Body').append(sb)
+
+									} else if (tp == '2-多选') {
+										if (F == undefined ||F == ''||F.length==0) {
+											if (E == undefined ||E == ''||E.length==0) {
+												var sb = "<ul id='"+idx+"' >"
+														+ "<h5 id='"+idx+"' data='"+solve+"' score='2'  class='card-title'>"
+														+ html2Escape(quest)
+														+ "</h5> "
+														+ "<li id='cli'  >  <input  type='checkbox' name='"+idx+"' id='"+idx+"' value='A' />  "
+														+ " A. "
+														+ html2Escape(A)
+														+ "</li>"
+														+ "<li id='cli'  > <input  type='checkbox' name='"+idx+"' id='"+idx+"' value='B' /> B. "
+														+ html2Escape(B)
+														+ "</li>"
+														+ "<li id='cli'  > <input  type='checkbox' name='"+idx+"' id='"+idx+"' value='C' /> C. "
+														+ html2Escape(C)
+														+ "</li>"
+														+ "<li id='cli'  > <input  type='checkbox' name='"+idx+"' id='"+idx+"' value='D' /> D. "
+														+ html2Escape(D) + "</li>"
+														+"<li name ='solve' hidden >正確答案："+solve+"</li>"
+														+ "</ul><hr/>";
+											} else {
+												var sb = "<ul id='"+idx+"' >"
+														+ "<h5 id='"+idx+"' data='"+solve+"' score='2'  class='card-title'>"
+														+ html2Escape(quest)
+														+ "</h5> "
+														+ "<li id='cli'  >  <input  type='checkbox' name='"+idx+"' id='"+idx+"' value='A' />  "
+														+ " A. "
+														+ html2Escape(A)
+														+ "</li>"
+														+ "<li id='cli'  > <input  type='checkbox' name='"+idx+"' id='"+idx+"' value='B' /> B. "
+														+ html2Escape(B)
+														+ "</li>"
+														+ "<li id='cli'  > <input  type='checkbox' name='"+idx+"' id='"+idx+"' value='C' /> C. "
+														+ html2Escape(C)
+														+ "</li>"
+														+ "<li id='cli'  > <input  type='checkbox' name='"+idx+"' id='"+idx+"' value='D' /> D. "
+														+ html2Escape(D)
+														+ "</li>"
+														+ "<li id='cli'  > <input  type='checkbox' name='"+idx+"' id='"+idx+"' value='E' /> E. "
+														+ html2Escape(E) + "</li>"
+														+"<li name ='solve' hidden >正確答案："+solve+"</li>"
+														+ "</ul><hr/>";
+											}
+
+										} else {
+											var sb = "<ul id='"+idx+"' >"
+													+ "<h5 id='"+idx+"' data='"+solve+"' score='2'  class='card-title'>"
+													+ html2Escape(quest)
+													+ "</h5> "
+													+ "<li id='cli'  >  <input  type='checkbox' name='"+idx+"' id='"+idx+"' value='A' />  "
+													+ " A. "
+													+ html2Escape(A)
+													+ "</li>"
+													+ "<li id='cli'  > <input  type='checkbox' name='"+idx+"' id='"+idx+"' value='B' /> B. "
+													+ html2Escape(B)
+													+ "</li>"
+													+ "<li id='cli'  > <input  type='checkbox' name='"+idx+"' id='"+idx+"' value='C' /> C. "
+													+ html2Escape(C)
+													+ "</li>"
+													+ "<li id='cli'  > <input  type='checkbox' name='"+idx+"' id='"+idx+"' value='D' /> D. "
+													+ html2Escape(D)
+													+ "</li>"
+													+ "<li id='cli'  > <input  type='checkbox' name='"+idx+"' id='"+idx+"' value='E' /> E. "
+													+ html2Escape(E)
+													+ "</li>"
+													+ "<li id='cli'  > <input  type='checkbox' name='"+idx+"' id='"+idx+"' value='F' /> F. "
+													+ html2Escape(F)
+													+ "</li>"
+													+"<li name ='solve' hidden >正確答案："+solve+"</li>"
+													+ "</ul><hr/>";
+
+										}
+										$('#check-Body').append(sb)
+									} else {
+										var sb = "<ul id='"+idx+"' >"
+												+ "<h5 id='"+idx+"' data='"+solve+"' score='2'  class='card-title'>"
+												+ html2Escape(quest)
+												+ "</h5> "
+												+ "<li id='sli'  >  <input  type='radio' name='"+idx+"' id='"+idx+"' value='A' />  "
+												+ " A. 正确</li>"
+												+ "<li id='sli'  > <input  type='radio' name='"+idx+"' id='"+idx+"' value='B' /> B. 错误</li>"
+												+"<li name ='solve' hidden >正確答案："+solve+"</li>"
+												+ "</ul><hr/>";
+												
+										$('#bool-Body').append(sb)
+									}
+
+								})
+
+			};
+
+			$('#li').click(function() {
+				alert(123)
+				$(this).children(":radio").prop("checked", true)
+			})
+
+			if (rABS) {
+				reader.readAsArrayBuffer(f);
+			} else {
+				reader.readAsBinaryString(f);
+			}
+		}
+
+		function fixdata(data) { //文件流转BinaryString
+			var o = "", l = 0, w = 10240;
+			for (; l < data.byteLength / w; ++l)
+				o += String.fromCharCode.apply(null, new Uint8Array(data.slice(
+						l * w, l * w + w)));
+			o += String.fromCharCode.apply(null, new Uint8Array(data.slice(l
+					* w)));
+			return o;
+		}
+	</script>
+
+	<script type="text/javascript">
+	
+
+	
+
+		$("body").on("click", "#sli", function() {
+			$(this).children().prop("checked", true)
+			if($("[name='selenium']").prop("checked"))
+			{
+				getScore()
+			}
+		})
+		$("body").on("click", "#cli", function() {
+			$(this).children().click()
+			if($("[name='selenium']").prop("checked"))
+			{
+				getScore()
+			}
+		})
+		function getScore() {
+			var score = 0;
+			var amount =0;
+			$("h5").each(
+					function(i, v) {
+						var data = $(v).attr('data')
+						var id = $(v).attr('id')
+						if (data.length == 1) {
+							var rest = $(
+									':input[id="' + id + '"][value="' + data + '"]')
+									.prop("checked")
+							var colection= $(':input[id="' + id + '"][value!="' + data + '"]')
+							for(var i=0;i<colection.length;i++)
+							{
+								if($(colection[i]).prop("checked"))
+									{
+									rest = false
+									break;
+									}
+							}
+							if (rest) {
+								score += parseInt($(v).attr('score'))
+								
+								$(v).css('color','black')
+								$("ul[id='"+id+"']").attr('status','1')
+							} else {
+								$(v).css('color', 'red')
+								amount++
+								$("ul[id='"+id+"']").attr('status','0')
+							}
+						} else {
+							var colection =$(':input[id="' + id + '"]');
+							var mydata ='';
+							$(':input[id="' + id + '"]').each(function(i,v){
+								if($(v).prop('checked'))
+									mydata+=$(v).val()
+							})
+							
+							
+
+							if (mydata==data) {
+								$(v).css('color','black')
+								score += parseInt($(v).attr('score'))
+								$("ul[id='"+id+"']").attr('status','1')
+							} else {
+								$(v).css('color', 'red')
+								amount++
+								$("ul[id='"+id+"']").attr('status','0')
+							}
+						}
+					})
+			$(".score").text(score+"分")
+			$(".no").text(amount+"道")
+			error($("[name='error']"))
+			solve($("[name='showsolve']"))
+			
+		}
+		function error(obj)
+		{
+			
+			if($(obj).prop("checked"))
+			{
+				
+				$("ul[status='1']").hide()
+				
+			}
+			else
+			{
+				$("ul[status='1']").show()
+			}
+		}
+		function solve(obj)
+		{
+			if($(obj).prop("checked"))
+			{
+				$("[name='solve']").attr("hidden",false)
+			}
+			else
+			{
+				$("[name='solve']").attr("hidden",true)
+			}
+		}
+	</script>
+</body>
+</html>
