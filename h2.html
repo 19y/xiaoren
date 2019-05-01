@@ -13,15 +13,16 @@
 	$(function(){
 		$.ajax({
 			type:"get",
-			url:"https://raw.githubusercontent.com/19y/xiaoren/master/xiaorenData/Java深入学习/Java深入学习-10.txt",
+			url:"https://github.com/19y/xiaoren/tree/master/xiaorenData",
+			contentType: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
 			success:function(rel){
-				var json = jQuery.parseJSON(rel)
-				for(var key in json[1])
-				{
-					console.log(key)
-				}
+				console.log(rel)
 			}
+			
 		})
+		
+		
+	   
 	})
 </script>
 </body>
